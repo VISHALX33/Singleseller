@@ -5,17 +5,14 @@
 
 import { body, validationResult } from 'express-validator';
 
-/**
- * Password strength validation regex
- * At least 1 uppercase, 1 lowercase, 1 number, 1 special char
- */
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
-
-/**
- * Phone number validation regex
- * Indian phone format (10 digits, starts with 6-9)
- */
-const phoneRegex = /^[6-9]\d{9}$/;
+// Validation middleware handler
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+  }
+  next();
+};
 
 /**
  * Validation rules for user registration
@@ -48,15 +45,15 @@ export const validateRegister = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long')
     .isLength({ max: 50 })
-    .withMessage('Password must not exceed 50 characters')
-    .matches(passwordRegex)
-    .withMessage('Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character (@$!%*?&)'),
+    .withMessage('Password must not exceed 50 characters'),
 
   body('phone')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(phoneRegex)
-    .withMessage('Please provide a valid 10-digit Indian phone number (starting with 6-9)'),
+    .matches(/^[6-9]\d{9}$/)
+    .withMessage('Phone must be a valid 10-digit Indian number'),
+
+  handleValidationErrors,
 ];
 
 /**
@@ -76,6 +73,8 @@ export const validateLogin = [
     .withMessage('Password is required')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
+
+  handleValidationErrors,
 ];
 
 /**
@@ -95,14 +94,16 @@ export const validateUpdateProfile = [
   body('phone')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(phoneRegex)
-    .withMessage('Please provide a valid 10-digit Indian phone number (starting with 6-9)'),
+    .matches(/^[6-9]\d{9}$/)
+    .withMessage('Phone must be a valid 10-digit Indian number'),
 
   body('avatar')
     .optional({ checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('Avatar must be a valid URL'),
+
+  handleValidationErrors,
 ];
 
 /**
@@ -121,9 +122,7 @@ export const validateChangePassword = [
     .isLength({ min: 6 })
     .withMessage('New password must be at least 6 characters long')
     .isLength({ max: 50 })
-    .withMessage('New password must not exceed 50 characters')
-    .matches(passwordRegex)
-    .withMessage('New password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character (@$!%*?&)'),
+    .withMessage('New password must not exceed 50 characters'),
 
   body('confirmPassword')
     .notEmpty()
@@ -135,6 +134,8 @@ export const validateChangePassword = [
       return true;
     })
     .withMessage('New password and confirm password must match'),
+
+  handleValidationErrors,
 ];
 
 export default {

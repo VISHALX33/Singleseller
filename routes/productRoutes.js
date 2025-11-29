@@ -16,7 +16,7 @@ import {
   getFeaturedProducts,
   getProductStats,
 } from '../controllers/productController.js';
-import { authenticate, authorize } from '../middlewares/auth.js';
+import { verifyToken, isAdmin } from '../middlewares/auth.js';
 import { uploadProductMiddleware } from '../middlewares/uploadMiddleware.js';
 import { validateProductCreate, validateProductUpdate } from '../middlewares/validation/productValidation.js';
 
@@ -31,15 +31,15 @@ router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', getProductById);
 
 // Admin routes - require authentication and admin role
-router.post('/', authenticate, authorize('admin'), uploadProductMiddleware.array('images', 5), validateProductCreate, createProduct);
-router.put('/:id', authenticate, authorize('admin'), uploadProductMiddleware.array('images', 5), validateProductUpdate, updateProduct);
-router.delete('/:id', authenticate, authorize('admin'), deleteProduct);
+router.post('/', verifyToken, isAdmin, uploadProductMiddleware.array('images', 5), validateProductCreate, createProduct);
+router.put('/:id', verifyToken, isAdmin, uploadProductMiddleware.array('images', 5), validateProductUpdate, updateProduct);
+router.delete('/:id', verifyToken, isAdmin, deleteProduct);
 
 // Image management routes
-router.post('/:id/images', authenticate, authorize('admin'), uploadProductMiddleware.array('images', 5), uploadProductImages);
-router.delete('/:id/images/:imageIndex', authenticate, authorize('admin'), deleteProductImage);
+router.post('/:id/images', verifyToken, isAdmin, uploadProductMiddleware.array('images', 5), uploadProductImages);
+router.delete('/:id/images/:imageIndex', verifyToken, isAdmin, deleteProductImage);
 
 // Admin stats
-router.get('/stats/dashboard', authenticate, authorize('admin'), getProductStats);
+router.get('/stats/dashboard', verifyToken, isAdmin, getProductStats);
 
 export default router;

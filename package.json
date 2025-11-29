@@ -2,11 +2,12 @@
   "name": "singleseller",
   "version": "1.0.0",
   "description": "Singleseller",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server.js",
+    "test": "node test-notifications.js"
   },
   "keywords": [
     "ecommerce",

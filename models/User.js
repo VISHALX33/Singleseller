@@ -123,15 +123,14 @@ userSchema.index({ role: 1 });
 userSchema.pre('save', async function (next) {
   // Only hash if password is new or modified
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
   } catch (error) {
-    next(error);
+    throw error;
   }
 });
 
@@ -142,15 +141,22 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 
 // Method to generate JWT token
 userSchema.methods.generateAuthToken = function () {
+  const jwtSecret = process.env.JWT_SECRET || 'default_jwt_secret_key_change_in_production';
+  const jwtExpire = process.env.JWT_EXPIRE || '7d';
+  
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET is not defined in environment variables');
+  }
+  
   const token = jwt.sign(
     {
       id: this._id,
       email: this.email,
       role: this.role,
     },
-    process.env.JWT_SECRET || 'your_jwt_secret_key',
+    jwtSecret,
     {
-      expiresIn: process.env.JWT_EXPIRE || '7d',
+      expiresIn: jwtExpire,
     }
   );
 

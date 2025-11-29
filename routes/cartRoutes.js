@@ -4,13 +4,12 @@
  */
 import express from 'express';
 import * as cartController from '../controllers/cartController.js';
-import auth from '../middlewares/auth.js';
-import { validateCartItem } from '../middlewares/validation.js';
+import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
 // Protect all cart routes
-router.use(auth);
+router.use(verifyToken);
 
 /**
  * GET /api/cart
@@ -23,7 +22,7 @@ router.get('/', cartController.getCart);
  * Add item to cart
  * Body: { productId, quantity }
  */
-router.post('/', validateCartItem, cartController.addToCart);
+router.post('/', cartController.addToCart);
 
 /**
  * PUT /api/cart/:itemId

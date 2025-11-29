@@ -3,7 +3,7 @@
  * Handles: add/remove items, update quantities, calculate totals
  */
 import asyncHandler from '../middlewares/asyncHandler.js';
-import { ApiError } from '../utils/ApiError.js';
+import ApiError from '../utils/ApiError.js';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 

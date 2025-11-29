@@ -227,6 +227,28 @@ export const ProductProvider = ({ children }) => {
     }
   }, []);
 
+  /**
+   * Search products
+   */
+  const searchProducts = useCallback(async (query, limit = 5) => {
+    try {
+      const response = await productService.getAllProducts({
+        search: query,
+        limit: limit,
+      });
+      return {
+        success: true,
+        data: response.data || [],
+      };
+    } catch (err) {
+      return {
+        success: false,
+        data: [],
+        error: err.message,
+      };
+    }
+  }, []);
+
   const value = {
     // Products
     products,
@@ -258,6 +280,7 @@ export const ProductProvider = ({ children }) => {
     getProductById,
     getProductBySlug,
     getCategoryProducts,
+    searchProducts,
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;

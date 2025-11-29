@@ -3,8 +3,7 @@
  */
 import express from 'express';
 import * as orderController from '../controllers/orderController.js';
-import auth from '../middlewares/auth.js';
-import { validateOrder } from '../middlewares/validation.js';
+import { verifyToken, isAdmin } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -13,7 +12,7 @@ const router = express.Router();
  * Create new order from cart
  * @access Protected
  */
-router.post('/', auth, validateOrder, orderController.createOrder);
+router.post('/', verifyToken, orderController.createOrder);
 
 /**
  * GET /api/orders
@@ -21,14 +20,14 @@ router.post('/', auth, validateOrder, orderController.createOrder);
  * @access Protected
  * @query page, limit, status, sortBy
  */
-router.get('/', auth, orderController.getOrders);
+router.get('/', verifyToken, orderController.getOrders);
 
 /**
  * GET /api/orders/:id
  * Get order details
  * @access Protected
  */
-router.get('/:id', auth, orderController.getOrderById);
+router.get('/:id', verifyToken, orderController.getOrderById);
 
 /**
  * PUT /api/orders/:id/status
@@ -36,15 +35,7 @@ router.get('/:id', auth, orderController.getOrderById);
  * @access Admin
  * @body status, comment
  */
-router.put('/:id/status', auth, (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({
-      success: false,
-      message: 'Only admins can update order status',
-    });
-  }
-  next();
-}, orderController.updateOrderStatus);
+router.put('/:id/status', verifyToken, isAdmin, orderController.updateOrderStatus);
 
 /**
  * POST /api/orders/:id/cancel
@@ -52,6 +43,6 @@ router.put('/:id/status', auth, (req, res, next) => {
  * @access Protected (User/Admin)
  * @body reason
  */
-router.post('/:id/cancel', auth, orderController.cancelOrder);
+router.post('/:id/cancel', verifyToken, orderController.cancelOrder);
 
 export default router;

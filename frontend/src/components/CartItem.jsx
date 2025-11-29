@@ -54,9 +54,6 @@ export default function CartItem({ item, isDesktop }) {
         {/* Price */}
         <td className="px-6 py-4">
           <p className="font-medium text-gray-900">₹{item.price.toFixed(2)}</p>
-          {item.discount && (
-            <p className="text-sm text-green-600">Save ₹{(item.discount * item.price).toFixed(2)}</p>
-          )}
         </td>
 
         {/* Quantity */}

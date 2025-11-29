@@ -3,7 +3,7 @@
  * Handles: create orders, get orders, update status, cancel orders
  */
 import asyncHandler from '../middlewares/asyncHandler.js';
-import { ApiError } from '../utils/ApiError.js';
+import ApiError from '../utils/ApiError.js';
 import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';

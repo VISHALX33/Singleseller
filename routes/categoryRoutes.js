@@ -12,7 +12,7 @@ import {
   getCategoriesWithCount,
   bulkUpdateCategoryStatus,
 } from '../controllers/categoryController.js';
-import { authenticate, authorize } from '../middlewares/auth.js';
+import { verifyToken, isAdmin } from '../middlewares/auth.js';
 import { validateCategoryCreate, validateCategoryUpdate } from '../middlewares/validation/categoryValidation.js';
 
 const router = express.Router();
@@ -23,12 +23,12 @@ router.get('/slug/:slug', getCategoryBySlug);
 router.get('/:id', getCategoryById);
 
 // Admin routes
-router.post('/', authenticate, authorize('admin'), validateCategoryCreate, createCategory);
-router.put('/:id', authenticate, authorize('admin'), validateCategoryUpdate, updateCategory);
-router.delete('/:id', authenticate, authorize('admin'), deleteCategory);
+router.post('/', verifyToken, isAdmin, validateCategoryCreate, createCategory);
+router.put('/:id', verifyToken, isAdmin, validateCategoryUpdate, updateCategory);
+router.delete('/:id', verifyToken, isAdmin, deleteCategory);
 
 // Admin stats
-router.get('/stats/count', authenticate, authorize('admin'), getCategoriesWithCount);
-router.put('/bulk/status', authenticate, authorize('admin'), bulkUpdateCategoryStatus);
+router.get('/stats/count', verifyToken, isAdmin, getCategoriesWithCount);
+router.put('/bulk/status', verifyToken, isAdmin, bulkUpdateCategoryStatus);
 
 export default router;
