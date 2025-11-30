@@ -9,6 +9,8 @@
     "dev": "nodemon server.js",
     "test": "node test-notifications.js",
     "gen-images": "node scripts/generate-product-images.js"
+    ,"seed-assets": "node scripts/seed-products-from-assets.js",
+    "seed-urls": "node scripts/seed-products-from-urls.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

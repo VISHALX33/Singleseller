@@ -5,14 +5,15 @@ const Product = require('../models/Product');
 const ApiError = require('../utils/ApiError');
 
 async function getUserCart(userId) {
-  return Cart.findOne({ user: userId });
+  // Return populated cart to avoid calling populate on a Promise later
+  return Cart.findOne({ user: userId }).populate('items.product');
 }
 
 exports.createOrder = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const cart = await getUserCart(req.user._id).populate('items.product');
+    const cart = await getUserCart(req.user._id);
     if (!cart || cart.items.length === 0) throw new ApiError('Cart is empty', 400);
 
     for (const item of cart.items) {

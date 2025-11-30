@@ -109,6 +109,14 @@ npm run gen-images
 ```
 Then restart the frontend to pick up assets if needed.
 
+### Seed Products From Asset Filenames
+If you place image files inside `Frontend/public/assets` and want corresponding products:
+```
+cd Backend
+npm run seed-assets
+```
+This script derives a slug from each filename (excluding extension), creates a product with random price/stock if it does not already exist. Existing slugs are skipped.
+
 ## NPM Scripts
 Backend:
 - `npm start` – run server

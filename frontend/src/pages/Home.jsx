@@ -17,7 +17,7 @@ export default function Home() {
       </section>
       <section>
         <h2 className="text-2xl font-semibold text-primary mb-4">Featured Products</h2>
-        {featured.length ? <div className="grid gap-4 md:grid-cols-3">{featured.map(p => <ProductGrid key={p._id} product={p} />)}</div> : <p className="text-slate">No featured products available.</p>}
+        {featured.length ? <div className="grid gap-4 md:grid-cols-2">{featured.map(p => <ProductGrid key={p._id} product={p} />)}</div> : <p className="text-slate">No featured products available.</p>}
       </section>
       <section id="categories">
         <h2 className="text-2xl font-semibold text-primary mb-4">Browse Categories</h2>
