@@ -1,161 +1,38 @@
-/**
- * Login Page
- * User login with email and password
- */
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function Login() {
-  const navigate = useNavigate();
   const { login, loading } = useAuth();
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  
-  const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: '', password: '' });
 
-  // Validate email format
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  function handleChange(e) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  }
 
-  // Validate form
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Handle input change
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
-    }
-  };
-
-  // Handle form submit
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      await login(formData);
-      toast.success('Login successful!');
-      navigate('/');
-    } catch (error) {
-      const message = error.message || 'Login failed. Please try again.';
-      toast.error(message);
-    }
-  };
+    if (!form.email || !form.password) return;
+    const ok = await login(form);
+    if (ok) navigate('/profile');
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your account</p>
+    <div className="max-w-md mx-auto py-8">
+      <h2 className="text-2xl font-semibold text-primary mb-4">Login</h2>
+      <form onSubmit={handleSubmit} className="space-y-4 card">
+        <div>
+          <label className="block text-sm mb-1">Email</label>
+          <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full border rounded px-3 py-2 focus:outline-primary" required />
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              error={errors.email}
-              disabled={loading}
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              error={errors.password}
-              disabled={loading}
-            />
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
-        </form>
-
-        {/* Divider */}
-        <div className="my-6 flex items-center">
-          <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-3 text-sm text-gray-600">or</span>
-          <div className="flex-1 border-t border-gray-300"></div>
+        <div>
+          <label className="block text-sm mb-1">Password</label>
+          <input name="password" type="password" value={form.password} onChange={handleChange} className="w-full border rounded px-3 py-2 focus:outline-primary" required />
         </div>
-
-        {/* Register Link */}
-        <div className="text-center">
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link
-              to="/register"
-              className="text-blue-600 hover:text-blue-700 font-semibold transition"
-            >
-              Sign up here
-            </Link>
-          </p>
-        </div>
-      </div>
+        <button disabled={loading} className="btn-primary w-full">{loading ? 'Please wait...' : 'Login'}</button>
+        <p className="text-sm text-center">No account? <Link to="/register" className="text-primary underline">Register</Link></p>
+      </form>
     </div>
   );
 }

@@ -1,435 +1,188 @@
-# 🛒 Singleseller - Complete E-Commerce Platform
+# SingleSeller E-commerce Platform
 
-**A full-stack single-seller e-commerce solution with admin dashboard, shopping cart, and order management.**
+SingleSeller is a full‑stack single‑seller e‑commerce application built with a modular Express + MongoDB backend and a modern React (Vite + Tailwind CSS) frontend. It supports product browsing, cart & checkout, order lifecycle management, and an admin dashboard for store operations.
 
----
+## Tech Stack
+- Backend: Node.js, Express, MongoDB, Mongoose, JWT Auth, Multer (uploads), Express Validator
+- Frontend: React 18, Vite, React Router, Tailwind CSS, Axios, React Hot Toast
+- State Management: React Context (Auth, Product, Cart, Admin views)
+- Build Tools: Vite (frontend), Nodemon (backend dev)
 
-## 📋 Table of Contents
+## Core Features
+- User authentication & profile management
+- Product catalog with search, filtering, pagination & image uploads
+- Shopping cart with optimistic updates
+- Checkout flow (address, payment method selection, review)
+- Order creation, status timeline & cancellation rules
+- Admin dashboard (stats, product CRUD, order management, category management)
 
-1. [Project Overview](#project-overview)
-2. [Tech Stack](#tech-stack)
-3. [Project Structure](#project-structure)
-4. [Installation](#installation)
-5. [Quick Start](#quick-start)
-6. [Configuration](#configuration)
-7. [Running the Application](#running-the-application)
-8. [API Documentation](#api-documentation)
-9. [Features](#features)
-10. [Development Guide](#development-guide)
-11. [Deployment](#deployment)
-12. [Troubleshooting](#troubleshooting)
-
----
-
-## 🎯 Project Overview
-
-**Singleseller** is a complete e-commerce platform built with:
-- **Frontend**: React + Vite + Tailwind CSS
-- **Backend**: Node.js + Express + MongoDB
-- **Features**: User authentication, product management, shopping cart, checkout, admin dashboard, order management
-
-### Key Highlights
-✅ Complete shopping cart and checkout system  
-✅ Admin dashboard with role-based access  
-✅ Product and category management  
-✅ Order tracking with status updates  
-✅ User authentication with JWT  
-✅ Responsive design (mobile, tablet, desktop)  
-✅ Production-ready code with error handling  
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 19** - UI framework
-- **Vite** - Build tool (lightning-fast bundling)
-- **React Router v7** - Client-side routing
-- **Tailwind CSS** - Utility-first CSS framework
-- **Axios** - HTTP client
-- **React Hot Toast** - Toast notifications
-- **Lucide React** - Icon library
-
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express 5** - Web framework
-- **MongoDB 9** - NoSQL database
-- **Mongoose** - ODM for MongoDB
-- **JWT** - Authentication
-- **Bcryptjs** - Password hashing
-- **Multer** - File upload handling
-- **CORS** - Cross-origin requests
-- **dotenv** - Environment variables
-
----
-
-## 📁 Project Structure
-
+## Folder Structure
 ```
-singleseller/
-├── frontend/                      # React application
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── admin/
-│   │   │   │   ├── AdminLayout.jsx
-│   │   │   │   ├── AdminSidebar.jsx
-│   │   │   │   ├── StatsCard.jsx
-│   │   │   │   ├── DataTable.jsx
-│   │   │   │   ├── ImageUploadPreview.jsx
-│   │   │   │   └── ProductForm.jsx
-│   │   │   └── [Cart, Order, Payment components]
-│   │   ├── pages/
-│   │   │   ├── admin/
-│   │   │   │   ├── Dashboard.jsx
-│   │   │   │   ├── Products.jsx
-│   │   │   │   ├── Orders.jsx
-│   │   │   │   └── Categories.jsx
-│   │   │   └── [Cart, Checkout, Order pages]
-│   │   ├── services/
-│   │   │   ├── adminService.js
-│   │   │   ├── cartService.js
-│   │   │   └── [Auth, Product, Order services]
-│   │   └── App.jsx
-│   └── package.json
-│
-├── config/
-│   ├── db.js                      # MongoDB connection
-│   └── config.env
-│
-├── controllers/
-│   ├── authController.js
-│   ├── productController.js
-│   ├── cartController.js
-│   ├── orderController.js
-│   └── categoryController.js
-│
-├── models/
-│   ├── User.js
-│   ├── Product.js
-│   ├── Cart.js
-│   ├── Order.js
-│   └── Category.js
-│
-├── routes/
-│   ├── authRoutes.js
-│   ├── productRoutes.js
-│   ├── cartRoutes.js
-│   ├── orderRoutes.js
-│   └── categoryRoutes.js
-│
-├── server.js                      # Backend entry point
-├── app.js                         # Express setup
-├── package.json                   # Scripts updated
-├── .env.example                   # Environment template
-└── test-notifications.js          # Test suite
+Singleseller/
+	Backend/
+		controllers/       # Route handlers (auth, product, category, cart, order, admin)
+		models/            # Mongoose schemas (User, Product, Category, Cart, Order)
+		middlewares/       # Auth, validation, upload, error handler
+		routes/            # Express routers for each resource
+		utils/             # Helpers (ApiError, fileHelper)
+		uploads/           # Uploaded product images
+		config/            # DB connection & env config
+		server.js          # Backend server bootstrap
+		app.js             # Express app config & route mounting
+		.env.example       # Example environment variables
+	Frontend/
+		src/
+			components/      # Reusable UI + admin components
+			pages/           # Route pages (public, auth, cart, checkout, admin)
+			context/         # React context providers
+			services/        # API service wrappers (axios)
+			utils/           # Utility functions
+			assets/          # Static assets/placeholders
+			App.jsx          # App root
+		.env.example       # Example frontend env (VITE_API_URL)
+	README.md
 ```
 
----
+## Environment Variables
 
-## 🚀 Installation
-
-### Prerequisites
-- Node.js v18.0.0 or higher
-- MongoDB (local or Atlas cloud)
-- npm or yarn
-
-### Quick Install
-
-```bash
-# Backend dependencies
-npm install
-
-# Frontend dependencies
-cd frontend
-npm install
-cd ..
+Backend `.env` (copy from `.env.example`):
 ```
-
----
-
-## 🏃 Quick Start
-
-### 1. Configure Environment
-
-**Backend (.env):**
-```env
 NODE_ENV=development
 PORT=5000
 MONGO_URI=mongodb://localhost:27017/ecommerce
-JWT_SECRET=your_jwt_secret_here_change_in_production
+JWT_SECRET=change_this_in_production
 JWT_EXPIRE=7d
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173/
 ```
 
-**Frontend (.env.local):**
-```env
+Frontend `.env`:
+```
 VITE_API_URL=http://localhost:5000/api
-VITE_ENV=development
 ```
 
-### 2. Start MongoDB
-```bash
-# Local MongoDB
-mongod
+## Installation
+Prerequisites: Node.js (>=18), MongoDB running locally.
 
-# Or use MongoDB Atlas (cloud)
-# Update MONGO_URI with your Atlas connection string
+Clone repository:
+```
+git clone https://github.com/VISHALX33/Singleseller.git
+cd Singleseller
 ```
 
-### 3. Run Backend
-```bash
-npm run dev
-# Backend running on http://localhost:5000
+Install backend dependencies:
 ```
-
-### 4. Run Frontend (New Terminal)
-```bash
-cd frontend
-npm run dev
-# Frontend running on http://localhost:5173
-```
-
-### 5. Access Application
-```
-http://localhost:5173
-```
-
----
-
-## ⚙️ Configuration
-
-### Backend Scripts (package.json)
-```json
-{
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "test": "node test-notifications.js"
-  }
-}
-```
-
-### Frontend Scripts (frontend/package.json)
-```json
-{
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  }
-}
-```
-
-### Environment Files
-
-**Create `.env` from `.env.example`:**
-```bash
+cd Backend
+npm install
 cp .env.example .env
 ```
 
-**Create `.env.local` from template:**
-```bash
-cd frontend
-cp .env.example .env.local
-cd ..
+Install frontend dependencies:
+```
+cd ../Frontend
+npm install
+cp .env.example .env
 ```
 
----
+## Running the Project
 
-## 📚 API Documentation
-
-### Authentication
+Start backend (port 5000):
 ```
-POST /api/auth/register
-POST /api/auth/login
-GET /api/auth/me
-POST /api/auth/logout
+cd Backend
+npm run dev
 ```
 
-### Products
+Start frontend (port 5173):
 ```
-GET /api/products
-GET /api/products/:id
-POST /api/products (Admin)
-PUT /api/products/:id (Admin)
-DELETE /api/products/:id (Admin)
+cd Frontend
+npm run dev
 ```
 
-### Cart
+Access frontend: `http://localhost:5173`
+
+### Generate Local Product Images
+This project uses locally generated SVG images per product slug for display when no uploaded images exist.
+
+Generate images (reads products from DB, writes to `Frontend/public/assets`):
 ```
-GET /api/cart
-POST /api/cart/add
-PUT /api/cart/update/:itemId
-DELETE /api/cart/remove/:itemId
-DELETE /api/cart/clear
+cd Backend
+npm run gen-images
 ```
+Then restart the frontend to pick up assets if needed.
 
-### Orders
+## NPM Scripts
+Backend:
+- `npm start` – run server
+- `npm run dev` – nodemon development watcher
+- `npm test` – run test notifications stub
+
+Frontend:
+- `npm run dev` – start Vite dev server
+- `npm run build` – production build
+- `npm run preview` – preview built assets
+
+## API Overview (High-Level)
+
+Base URL: `http://localhost:5000/api`
+
+Auth:
+- `POST /auth/register` – create account
+- `POST /auth/login` – login (JWT)
+- `GET /auth/profile` – get current user
+- `PUT /auth/profile` – update profile
+- `PUT /auth/change-password` – change password
+
+Products:
+- `GET /products` – list (query: page, limit, search, category, minPrice, maxPrice, status)
+- `GET /products/:id` – product detail
+- `POST /products` (admin) – create (multipart)
+- `PUT /products/:id` (admin) – update
+- `DELETE /products/:id` (admin) – soft delete
+- `POST /products/:id/images` (admin) – upload multiple images
+
+Categories:
+- `GET /categories`
+- `POST /categories` (admin)
+- `PUT /categories/:id` (admin)
+- `DELETE /categories/:id` (admin)
+
+Cart (auth):
+- `GET /cart` – get cart
+- `POST /cart/add` – add item
+- `PUT /cart/item/:itemId` – update quantity
+- `DELETE /cart/item/:itemId` – remove item
+- `DELETE /cart/clear` – clear cart
+
+Orders (auth):
+- `POST /orders` – create order from cart
+- `GET /orders` – list user (admin: all)
+- `GET /orders/:id` – get order detail
+- `PUT /orders/:id/status` (admin) – update status
+- `PUT /orders/:id/cancel` – cancel (user before shipped)
+
+Admin:
+- `GET /admin/stats` – dashboard metrics
+
+## Development Notes
+- Cart uses optimistic UI updates; backend authoritative state re-sync on error.
+- Order creation runs in a transaction (stock deduction + cart clear).
+- Product soft delete sets status to `inactive` rather than removing document.
+- Image uploads use Multer with basic validation; consider moving to cloud storage later.
+
+## Test Notifications Stub
+Run backend test script:
 ```
-GET /api/orders
-GET /api/orders/:id
-POST /api/orders
-PUT /api/orders/:id/status (Admin)
-```
-
-### Admin
-```
-GET /api/admin/dashboard/stats
-GET /api/admin/products
-GET /api/admin/orders
-GET /api/admin/categories
-```
-
----
-
-## ✨ Features
-
-### User Features
-✅ User registration and login  
-✅ Browse and search products  
-✅ Shopping cart management  
-✅ Checkout with shipping and payment  
-✅ Order history and tracking  
-✅ Order cancellation  
-
-### Admin Features
-✅ Dashboard with statistics  
-✅ Product management (CRUD)  
-✅ Category management (CRUD)  
-✅ Order management and status updates  
-✅ Revenue analytics  
-✅ Inventory tracking  
-
-### Technical Features
-✅ JWT authentication  
-✅ Password hashing (bcrypt)  
-✅ Image upload and processing  
-✅ Input validation  
-✅ Error handling  
-✅ CORS support  
-✅ Responsive design  
-✅ Toast notifications  
-
----
-
-## 🧪 Testing
-
-### Run Notification Tests
-```bash
+cd Backend
 npm test
 ```
+This simulates order status changes and placeholder email notifications via `console.log`.
 
-This tests:
-- Order status transitions
-- Email notifications (console mock)
-- Valid/invalid transitions
-- Order cancellation
-- Order details logging
+## Future Enhancements
+- Payment gateway integration (Razorpay test → live)
+- Address persistence in user profile
+- Server-side pagination for large admin datasets
+- Image management & CDN storage
+- Improved analytics (charts, trends)
 
----
+## License
+Internal / Proprietary (add license details if required).
 
-## 🏗️ Development
-
-### Running Backend Only
-```bash
-npm run dev
-# http://localhost:5000
-```
-
-### Running Frontend Only
-```bash
-cd frontend
-npm run dev
-# http://localhost:5173
-```
-
-### Building for Production
-```bash
-cd frontend
-npm run build
-# Outputs to frontend/dist
-```
-
----
-
-## 🚢 Deployment
-
-### Frontend (Vercel)
-```bash
-cd frontend
-npm run build
-vercel
-```
-
-### Backend (Heroku)
-```bash
-heroku create singleseller-api
-git push heroku main
-```
-
----
-
-## 🔧 Troubleshooting
-
-**Cannot find module:**
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**MongoDB Connection Error:**
-- Ensure MongoDB is running
-- Verify MONGO_URI in .env
-- Check MongoDB Atlas IP whitelist
-
-**CORS Errors:**
-- Verify FRONTEND_URL in .env
-- Ensure frontend and backend URLs match
-
-**Port Already in Use:**
-```bash
-# Windows
-netstat -ano | findstr :5000
-taskkill /PID <PID> /F
-```
-
----
-
-## 📖 Documentation
-
-- **Backend**: See `README_BACKEND.md`
-- **Frontend**: See `frontend/README.md`
-- **Admin Dashboard**: See `ADMIN_DASHBOARD_QUICK_REFERENCE.md`
-- **Shopping Cart**: See `SHOPPING_CART_QUICK_REFERENCE.md`
-
----
-
-## 🎉 Commands Reference
-
-```bash
-# Install dependencies
-npm install
-cd frontend && npm install && cd ..
-
-# Run development
-npm run dev                    # Backend
-cd frontend && npm run dev     # Frontend
-
-# Run tests
-npm test
-
-# Build production
-cd frontend && npm run build
-
-# Access URLs
-# Frontend: http://localhost:5173
-# Backend: http://localhost:5000
-# API: http://localhost:5000/api
-```
-
----
-
-**Happy coding! 🚀**
-
-*Last Updated: November 28, 2025*  
-*Version: 1.0.0*

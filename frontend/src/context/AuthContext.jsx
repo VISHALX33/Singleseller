@@ -1,209 +1,116 @@
-/**
- * Auth Context - Manage authentication state globally
- * Handles user state, authentication, and profile management
- */
-import { createContext, useContext, useState, useEffect } from 'react';
-import authService from '../services/authService';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { loginUser, registerUser, fetchProfile, updateProfileApi, changePasswordApi } from '../services/authService.js';
 
-const AuthContext = createContext(undefined);
+const AuthContext = createContext();
 
-/**
- * AuthProvider - Provides authentication context to entire app
- */
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(() => localStorage.getItem('authToken'));
+  const [loading, setLoading] = useState(false);
+  const isAuthenticated = !!user && !!token;
 
-  /**
-   * Initialize auth state on app load
-   * Restores user session if token exists in localStorage
-   */
+  // Fetch profile if token exists on mount
   useEffect(() => {
-    const initializeAuth = async () => {
+    const init = async () => {
+      if (!token) return;
+      setLoading(true);
       try {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-
-        if (storedToken) {
-          setToken(storedToken);
-          
-          // If we have stored user, use it
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
-            setIsAuthenticated(true);
-          } else {
-            // Fetch fresh profile from backend
-            try {
-              const response = await authService.getProfile();
-              setUser(response.data.user);
-              setIsAuthenticated(true);
-            } catch (error) {
-              // Token invalid or expired
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              setToken(null);
-              setUser(null);
-              setIsAuthenticated(false);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
+        const data = await fetchProfile();
+        setUser(data.user);
+      } catch (err) {
+        // token invalid / expired
+        handleLogout(false);
       } finally {
         setLoading(false);
       }
     };
+    init();
+  }, [token]);
 
-    initializeAuth();
-  }, []);
+  function storeToken(t) {
+    setToken(t);
+    if (t) localStorage.setItem('authToken', t); else localStorage.removeItem('authToken');
+  }
 
-  /**
-   * Register new user
-   * @param {Object} userData - { name, email, password, phone }
-   */
-  const register = async (userData) => {
+  async function handleLogin(credentials) {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await authService.register(userData);
-      const { user: userData_returned, token: newToken } = response.data;
-      
-      setUser(userData_returned);
-      setToken(newToken);
-      setIsAuthenticated(true);
-      
-      return response;
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
+      const data = await loginUser(credentials);
+      storeToken(data.token);
+      setUser(data.user);
+      toast.success('Logged in');
+      return true;
+    } catch (err) {
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /**
-   * Login user
-   * @param {Object} credentials - { email, password }
-   */
-  const login = async (credentials) => {
+  async function handleRegister(form) {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await authService.login(credentials);
-      const { user: userData_returned, token: newToken } = response.data;
-      
-      setUser(userData_returned);
-      setToken(newToken);
-      setIsAuthenticated(true);
-      
-      return response;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      const data = await registerUser(form);
+      storeToken(data.token);
+      setUser(data.user);
+      toast.success('Account created');
+      return true;
+    } catch (err) {
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /**
-   * Logout user
-   */
-  const logout = async () => {
+  async function handleProfileUpdate(form) {
+    setLoading(true);
     try {
-      await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setUser(null);
-      setToken(null);
-      setIsAuthenticated(false);
-    }
-  };
-
-  /**
-   * Get current user profile
-   */
-  const getProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await authService.getProfile();
-      setUser(response.data.user);
-      return response;
-    } catch (error) {
-      console.error('Get profile error:', error);
-      throw error;
+      const data = await updateProfileApi(form);
+      setUser(data.user);
+      toast.success('Profile updated');
+      return true;
+    } catch (err) {
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /**
-   * Update user profile
-   * @param {Object} profileData - { name, phone, avatar }
-   */
-  const updateProfile = async (profileData) => {
+  async function handleChangePassword(form) {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await authService.updateProfile(profileData);
-      setUser(response.data.user);
-      return response;
-    } catch (error) {
-      console.error('Update profile error:', error);
-      throw error;
+      await changePasswordApi(form);
+      toast.success('Password changed');
+      return true;
+    } catch (err) {
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /**
-   * Change user password
-   * @param {Object} passwordData - { oldPassword, newPassword, confirmPassword }
-   */
-  const changePassword = async (passwordData) => {
-    try {
-      setLoading(true);
-      const response = await authService.changePassword(passwordData);
-      return response;
-    } catch (error) {
-      console.error('Change password error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+  function handleLogout(showToast = true) {
+    storeToken(null);
+    setUser(null);
+    if (showToast) toast.success('Logged out');
+  }
 
-  /**
-   * Context value
-   */
   const value = {
-    // State
     user,
     token,
-    isAuthenticated,
     loading,
-    
-    // Methods
-    login,
-    register,
-    logout,
-    getProfile,
-    updateProfile,
-    changePassword,
+    isAuthenticated,
+    login: handleLogin,
+    register: handleRegister,
+    logout: handleLogout,
+    updateProfile: handleProfileUpdate,
+    changePassword: handleChangePassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}
 
-/**
- * Custom hook to use Auth Context
- * @throws {Error} If used outside AuthProvider
- */
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  
-  return context;
-};
+export function useAuth() {
+  return useContext(AuthContext);
+}

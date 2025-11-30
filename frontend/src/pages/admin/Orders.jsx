@@ -1,147 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Eye } from 'lucide-react';
-import AdminLayout from '../../components/admin/AdminLayout';
-import DataTable from '../../components/admin/DataTable';
-import * as adminService from '../../services/adminService';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from 'react';
+import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DataTable from '../../components/admin/DataTable.jsx';
+import { adminListOrders } from '../../services/adminService.js';
+import { Link } from 'react-router-dom';
+import formatPrice from '../../utils/formatPrice.js';
 
-/**
- * Admin Orders Page - List and manage orders
- */
 export default function Orders() {
-  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [page, status, search]);
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await adminService.getOrders(page, 10, status, search);
-      setOrders(data.orders || data);
-      setTotalPages(data.totalPages || 1);
-    } catch (error) {
-      toast.error(error.message || 'Failed to load orders');
-    } finally {
-      setLoading(false);
-    }
+  const load = async () => {
+    setLoading(true);
+    try { const list = await adminListOrders({ status }); setOrders(list); } catch {} finally { setLoading(false); }
   };
+  useEffect(()=>{ load(); }, [status]);
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: 'bg-yellow-50 text-yellow-700',
-      confirmed: 'bg-blue-50 text-blue-700',
-      processing: 'bg-purple-50 text-purple-700',
-      shipped: 'bg-indigo-50 text-indigo-700',
-      delivered: 'bg-green-50 text-green-700',
-      cancelled: 'bg-red-50 text-red-700',
-    };
-    return colors[status] || colors.pending;
-  };
+  const filtered = orders.filter(o => !search || o.orderId.toLowerCase().includes(search.toLowerCase()));
 
   const columns = [
-    {
-      key: 'orderNumber',
-      label: 'Order ID',
-      sortable: true,
-    },
-    {
-      key: 'user',
-      label: 'Customer',
-      render: (value, row) => (
-        <div>
-          <p className="font-medium text-gray-900">{value?.name || 'N/A'}</p>
-          <p className="text-xs text-gray-600">{value?.email || 'N/A'}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'pricing',
-      label: 'Amount',
-      render: (value) => <p className="font-medium">₹{value?.total.toLocaleString('en-IN')}</p>,
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
-          {value}
-        </span>
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Date',
-      render: (value) => new Date(value).toLocaleDateString('en-IN'),
-    },
-  ];
-
-  const actions = [
-    {
-      label: 'View',
-      icon: Eye,
-      onClick: (row) => navigate(`/admin/orders/${row._id}`),
-    },
+    { key:'orderId', label:'Order ID' },
+    { key:'orderStatus', label:'Status', render:r=> <span className='capitalize text-xs px-2 py-1 rounded bg-slate-100'>{r.orderStatus}</span> },
+    { key:'total', label:'Total', render:r=> formatPrice(r.total) },
+    { key:'user', label:'User', render:r=> (r.user ? (r.user.name || r.user.email || r.user._id) : '-') },
+    { key:'_id', label:'Actions', render:r=> <Link to={`/admin/orders/${r._id}`} className='text-primary text-xs'>View</Link> }
   ];
 
   return (
-    <AdminLayout pageTitle="Orders" pageDescription="Manage and track customer orders">
-      <div className="space-y-6">
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search by order ID..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-
-        {/* Orders Table */}
-        <DataTable
-          columns={columns}
-          data={orders}
-          loading={loading}
-          actions={actions}
-          onPageChange={setPage}
-          totalPages={totalPages}
-          currentPage={page}
-        />
+    <AdminLayout>
+      <div className='flex justify-between items-center mb-4'>
+        <h2 className='text-xl font-semibold text-primary'>Orders</h2>
       </div>
+      <div className='flex gap-2 mb-4'>
+        <select value={status} onChange={e=>setStatus(e.target.value)} className='border rounded px-3 py-2 text-sm'>
+          <option value=''>All Statuses</option>
+          {['placed','confirmed','packed','shipped','delivered','cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder='Search order ID...' className='border rounded px-3 py-2 text-sm' />
+        <button onClick={load} className='px-3 py-2 border rounded text-sm'>Refresh</button>
+      </div>
+      {loading && <p className='text-slate'>Loading...</p>}
+      <DataTable columns={columns} data={filtered} pageSize={15} />
     </AdminLayout>
   );
 }

@@ -1,21 +1,12 @@
-/**
- * API Service - Axios instance with interceptors
- * Handles API requests with authentication token management
- */
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-
-// Create axios instance
 const api = axios.create({
-  baseURL: API_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 10000
 });
 
-// Request interceptor - Add auth token to headers
+// Attach auth token if present
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -24,34 +15,15 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - Handle errors and token refresh
+// Global response / error handling
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Handle 401 - Unauthorized
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-
-    // Handle 403 - Forbidden
-    if (error.response?.status === 403) {
-      console.error('Access forbidden');
-    }
-
-    // Handle 500 - Server error
-    if (error.response?.status === 500) {
-      console.error('Server error');
-    }
-
+    const message = error.response?.data?.message || error.message || 'Request failed';
+    toast.error(message);
     return Promise.reject(error);
   }
 );

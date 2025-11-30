@@ -1,200 +1,122 @@
-/**
- * Cart Context - Manage shopping cart state globally with backend sync
- */
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import cartService from '../services/cartService';
+import { getCart, addCartItem, updateCartItem, removeCartItem, clearCartApi } from '../services/cartService.js';
+import { useAuth } from './AuthContext.jsx';
 
 const CartContext = createContext();
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within CartProvider');
-  }
-  return context;
-};
+export function CartProvider({ children }) {
+  const { token } = useAuth();
+  const [cartItems, setCartItems] = useState([]); // {itemId, product, quantity, lineSubtotal}
+  const [itemCount, setItemCount] = useState(0);
+  const [subtotal, setSubtotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-const initialState = {
-  cartItems: [],
-  itemCount: 0,
-  subtotal: 0,
-  loading: false,
-  error: null,
-};
-
-const cartReducer = (state, action) => {
-  switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-
-    case 'SET_CART':
-      return {
-        ...state,
-        cartItems: action.payload.items || [],
-        itemCount: action.payload.itemCount || 0,
-        subtotal: action.payload.subtotal || 0,
-        loading: false,
-        error: null,
-      };
-
-    case 'ADD_ITEM':
-      return {
-        ...state,
-        cartItems: action.payload.items,
-        itemCount: action.payload.itemCount,
-        subtotal: action.payload.subtotal,
-      };
-
-    case 'UPDATE_ITEM':
-      return {
-        ...state,
-        cartItems: action.payload.items,
-        itemCount: action.payload.itemCount,
-        subtotal: action.payload.subtotal,
-      };
-
-    case 'REMOVE_ITEM':
-      return {
-        ...state,
-        cartItems: action.payload.items,
-        itemCount: action.payload.itemCount,
-        subtotal: action.payload.subtotal,
-      };
-
-    case 'CLEAR_CART':
-      return {
-        ...state,
-        cartItems: [],
-        itemCount: 0,
-        subtotal: 0,
-      };
-
-    case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
-
-    default:
-      return state;
-  }
-};
-
-export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, initialState);
-
-  // Fetch cart from backend
-  const fetchCart = useCallback(async () => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const data = await cartService.getCart();
-      dispatch({ type: 'SET_CART', payload: data });
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-    }
-  }, []);
-
-  // Add item to cart
-  const addToCart = useCallback(
-    async (productId, quantity = 1) => {
-      try {
-        const updatedCart = await cartService.addToCart(productId, quantity);
-
-        dispatch({
-          type: 'ADD_ITEM',
-          payload: {
-            items: updatedCart.items || [],
-            itemCount: updatedCart.itemCount || 0,
-            subtotal: updatedCart.subtotal || 0,
-          },
-        });
-
-        toast.success(`Added to cart (${quantity} item${quantity > 1 ? 's' : ''})`);
-        return updatedCart;
-      } catch (error) {
-        toast.error(error.message || 'Failed to add item to cart');
-        throw error;
-      }
-    },
-    []
-  );
-
-  // Update item quantity
-  const updateQuantity = useCallback(async (itemId, quantity) => {
-    try {
-      const updatedCart = await cartService.updateCartItem(itemId, quantity);
-
-      dispatch({
-        type: 'UPDATE_ITEM',
-        payload: {
-          items: updatedCart.items || [],
-          itemCount: updatedCart.itemCount || 0,
-          subtotal: updatedCart.subtotal || 0,
-        },
-      });
-
-      toast.success('Quantity updated');
-      return updatedCart;
-    } catch (error) {
-      toast.error(error.message || 'Failed to update quantity');
-      throw error;
-    }
-  }, []);
-
-  // Remove item from cart
-  const removeItem = useCallback(async (itemId) => {
-    try {
-      const updatedCart = await cartService.removeFromCart(itemId);
-
-      dispatch({
-        type: 'REMOVE_ITEM',
-        payload: {
-          items: updatedCart.items || [],
-          itemCount: updatedCart.itemCount || 0,
-          subtotal: updatedCart.subtotal || 0,
-        },
-      });
-
-      toast.success('Item removed from cart');
-      return updatedCart;
-    } catch (error) {
-      toast.error(error.message || 'Failed to remove item');
-      throw error;
-    }
-  }, []);
-
-  // Clear entire cart
-  const clearCart = useCallback(async () => {
-    try {
-      await cartService.clearCart();
-
-      dispatch({ type: 'CLEAR_CART' });
-      toast.success('Cart cleared');
-    } catch (error) {
-      toast.error(error.message || 'Failed to clear cart');
-      throw error;
-    }
-  }, []);
-
-  // Fetch cart on mount if user is authenticated
-  useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      fetchCart();
-    }
-  }, [fetchCart]);
-
-  const value = {
-    cartItems: state.cartItems,
-    itemCount: state.itemCount,
-    subtotal: state.subtotal,
-    loading: state.loading,
-    error: state.error,
-    fetchCart,
-    addToCart,
-    updateQuantity,
-    removeItem,
-    clearCart,
+  const mapCart = (cart) => {
+    if (!cart) return [];
+    return (cart.items || []).map(i => ({
+      itemId: i._id,
+      product: i.product,
+      quantity: i.quantity,
+      lineSubtotal: i.price * i.quantity,
+      unitPrice: i.price
+    }));
   };
 
+  const recalcDerived = (items) => {
+    setItemCount(items.reduce((s, it) => s + it.quantity, 0));
+    setSubtotal(items.reduce((s, it) => s + it.lineSubtotal, 0));
+  };
+
+  const fetchCart = useCallback(async () => {
+    if (!token) return; // only when logged in
+    setLoading(true);
+    try {
+      const cart = await getCart();
+      const mapped = mapCart(cart);
+      setCartItems(mapped);
+      recalcDerived(mapped);
+    } catch (e) {
+      // handled by interceptor
+    } finally { setLoading(false); }
+  }, [token]);
+
+  useEffect(() => { fetchCart(); }, [fetchCart]);
+
+  const addToCart = async (productId, quantity = 1) => {
+    if (!token) { toast.error('Please login to add to cart'); return; }
+    // optimistic
+    setCartItems(prev => {
+      const existing = prev.find(p => p.product?._id === productId);
+      let next;
+      if (existing) {
+        next = prev.map(p => p.product?._id === productId ? { ...p, quantity: p.quantity + quantity, lineSubtotal: (p.quantity + quantity) * p.unitPrice } : p);
+      } else {
+        next = [...prev, { itemId: 'temp-' + productId, product: { _id: productId }, quantity, lineSubtotal: 0, unitPrice: 0 }];
+      }
+      recalcDerived(next);
+      return next;
+    });
+    try {
+      const cart = await addCartItem(productId, quantity);
+      const mapped = mapCart(cart);
+      setCartItems(mapped);
+      recalcDerived(mapped);
+      toast.success('Added to cart');
+    } catch (e) {
+      fetchCart();
+    }
+  };
+
+  const updateQuantity = async (itemId, quantity) => {
+    if (quantity < 1) return;
+    setCartItems(prev => {
+      const next = prev.map(i => i.itemId === itemId ? { ...i, quantity, lineSubtotal: i.unitPrice * quantity } : i);
+      recalcDerived(next);
+      return next;
+    });
+    try {
+      const cart = await updateCartItem(itemId, quantity);
+      const mapped = mapCart(cart);
+      setCartItems(mapped);
+      recalcDerived(mapped);
+    } catch (e) { fetchCart(); }
+  };
+
+  const removeItem = async (itemId) => {
+    setCartItems(prev => {
+      const next = prev.filter(i => i.itemId !== itemId);
+      recalcDerived(next);
+      return next;
+    });
+    try {
+      const cart = await removeCartItem(itemId);
+      const mapped = mapCart(cart);
+      setCartItems(mapped);
+      recalcDerived(mapped);
+      toast.success('Removed');
+    } catch (e) { fetchCart(); }
+  };
+
+  const clearCart = async () => {
+    const backup = cartItems;
+    setCartItems([]); setItemCount(0); setSubtotal(0);
+    try {
+      const cart = await clearCartApi();
+      const mapped = mapCart(cart);
+      setCartItems(mapped);
+      recalcDerived(mapped);
+      toast.success('Cart cleared');
+    } catch (e) {
+      setCartItems(backup); recalcDerived(backup);
+    }
+  };
+
+  const value = {
+    cartItems, itemCount, subtotal, loading,
+    fetchCart, addToCart, updateQuantity, removeItem, clearCart
+  };
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-};
+}
+
+export function useCart() { return useContext(CartContext); }

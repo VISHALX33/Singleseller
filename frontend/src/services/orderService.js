@@ -1,101 +1,27 @@
-/**
- * Order Service - API calls for order-related endpoints
- */
-import axios from 'axios';
+import api from './api.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+export async function placeOrder(payload) {
+  const { data } = await api.post('/orders', payload);
+  return data.order;
+}
 
-const orderService = {
-  // Create new order from cart
-  createOrder: async (shippingAddress, paymentMethod, transactionId = null) => {
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/orders`,
-        { shippingAddress, paymentMethod, transactionId },
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to create order');
-    }
-  },
+export async function getOrders(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const { data } = await api.get(`/orders${query ? '?' + query : ''}`);
+  return data.orders || [];
+}
 
-  // Get user's orders (paginated)
-  getOrders: async (page = 1, limit = 10, status = null) => {
-    try {
-      const params = new URLSearchParams({ page, limit });
-      if (status) params.append('status', status);
+export async function getOrderById(id) {
+  const { data } = await api.get(`/orders/${id}`);
+  return data.order;
+}
 
-      const response = await axios.get(
-        `${API_BASE_URL}/orders?${params}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch orders');
-    }
-  },
+export async function updateOrderStatus(id, orderStatus) {
+  const { data } = await api.put(`/orders/${id}/status`, { orderStatus });
+  return data.order;
+}
 
-  // Get order details by ID
-  getOrderById: async (orderId) => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/orders/${orderId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch order');
-    }
-  },
-
-  // Update order status (admin only)
-  updateOrderStatus: async (orderId, status, comment = '') => {
-    try {
-      const response = await axios.put(
-        `${API_BASE_URL}/orders/${orderId}/status`,
-        { status, comment },
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update order status');
-    }
-  },
-
-  // Cancel order
-  cancelOrder: async (orderId, reason = '') => {
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/orders/${orderId}/cancel`,
-        { reason },
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to cancel order');
-    }
-  },
-};
-
-export default orderService;
+export async function cancelOrder(id) {
+  const { data } = await api.put(`/orders/${id}/cancel`);
+  return data.order;
+}

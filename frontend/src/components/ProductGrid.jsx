@@ -1,46 +1,31 @@
-/**
- * ProductGrid Component - Responsive grid layout for products
- * Handles responsive columns and spacing
- */
-import React from 'react';
 import ProductCard from './ProductCard.jsx';
-import LoadingSkeletons from './LoadingSkeletons.jsx';
-import EmptyState from './EmptyState.jsx';
+import Loader from './Loader.jsx';
+import { useProducts } from '../context/ProductContext.jsx';
 
-const ProductGrid = ({ products, loading = false, error = null, onProductClick = null }) => {
-  if (error) {
+function Skeleton() {
+  return (
+    <div className="card animate-pulse h-64" />
+  );
+}
+
+export default function ProductGrid() {
+  const { products, loading } = useProducts();
+
+  if (loading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600 font-semibold mb-4">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          Retry
-        </button>
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} />)}
       </div>
     );
   }
 
-  if (loading) {
-    return <LoadingSkeletons count={12} />;
-  }
-
-  if (!products || products.length === 0) {
-    return <EmptyState message="No products found. Try adjusting your filters." />;
+  if (!loading && products.length === 0) {
+    return <p className="text-slate">No products match your criteria.</p>;
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {products.map(product => (
-        <ProductCard
-          key={product._id}
-          product={product}
-          onClick={onProductClick}
-        />
-      ))}
+    <div className="grid gap-4 md:grid-cols-3">
+      {products.map(p => <ProductCard key={p._id} product={p} />)}
     </div>
   );
-};
-
-export default ProductGrid;
+}

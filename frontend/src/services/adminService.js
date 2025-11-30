@@ -1,206 +1,70 @@
-import axios from 'axios';
+import api from './api.js';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// Dashboard stats
+export async function getAdminStats() {
+  const { data } = await api.get('/admin/stats');
+  return data.stats;
+}
 
-// Helper to get auth token
-const getAuthHeader = () => ({
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
+// Products
+export async function adminListProducts(params={}) {
+  const query = new URLSearchParams(params).toString();
+  const { data } = await api.get(`/products${query?`?${query}`:''}`);
+  return data.products || [];
+}
 
-/**
- * Admin Service - API calls for admin dashboard
- */
+export async function adminCreateProduct(form) {
+  const fd = new FormData();
+  Object.entries(form).forEach(([k,v]) => {
+    if (k === 'images' && Array.isArray(v)) v.forEach(img => fd.append('images', img));
+    else if (v !== undefined && v !== null) fd.append(k, v);
+  });
+  const { data } = await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  return data.product;
+}
 
-// ============ DASHBOARD ============
-export const getDashboardStats = async () => {
-  try {
-    const response = await axios.get(`${API_BASE}/admin/dashboard/stats`, {
-      headers: getAuthHeader(),
-    });
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch dashboard stats');
-  }
-};
+export async function adminUpdateProduct(id, form) {
+  const { data } = await api.put(`/products/${id}`, form);
+  return data.product;
+}
 
-// ============ PRODUCTS ============
-export const getProducts = async (page = 1, limit = 10, search = '', category = '') => {
-  try {
-    const params = new URLSearchParams();
-    params.append('page', page);
-    params.append('limit', limit);
-    if (search) params.append('search', search);
-    if (category) params.append('category', category);
+export async function adminDeleteProduct(id) {
+  await api.delete(`/products/${id}`);
+}
 
-    const response = await axios.get(`${API_BASE}/admin/products?${params}`, {
-      headers: getAuthHeader(),
-    });
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch products');
-  }
-};
+// Orders
+export async function adminListOrders(params={}) {
+  const query = new URLSearchParams(params).toString();
+  const { data } = await api.get(`/orders${query?`?${query}`:''}`);
+  return data.orders || [];
+}
 
-export const createProduct = async (formData) => {
-  try {
-    const response = await axios.post(`${API_BASE}/admin/products`, formData, {
-      headers: {
-        ...getAuthHeader(),
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to create product');
-  }
-};
+export async function adminGetOrder(id) {
+  const { data } = await api.get(`/orders/${id}`);
+  return data.order;
+}
 
-export const getProductById = async (id) => {
-  try {
-    const response = await axios.get(`${API_BASE}/admin/products/${id}`, {
-      headers: getAuthHeader(),
-    });
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch product');
-  }
-};
+export async function adminUpdateOrderStatus(id, orderStatus) {
+  const { data } = await api.put(`/orders/${id}/status`, { orderStatus });
+  return data.order;
+}
 
-export const updateProduct = async (id, formData) => {
-  try {
-    const response = await axios.put(`${API_BASE}/admin/products/${id}`, formData, {
-      headers: {
-        ...getAuthHeader(),
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to update product');
-  }
-};
+// Categories
+export async function adminListCategories() {
+  const { data } = await api.get('/categories');
+  return data.categories || [];
+}
 
-export const deleteProduct = async (id) => {
-  try {
-    await axios.delete(`${API_BASE}/admin/products/${id}`, {
-      headers: getAuthHeader(),
-    });
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to delete product');
-  }
-};
+export async function adminCreateCategory(form) {
+  const { data } = await api.post('/categories', form);
+  return data.category;
+}
 
-// ============ ORDERS ============
-export const getOrders = async (page = 1, limit = 10, status = '', search = '') => {
-  try {
-    const params = new URLSearchParams();
-    params.append('page', page);
-    params.append('limit', limit);
-    if (status) params.append('status', status);
-    if (search) params.append('search', search);
+export async function adminUpdateCategory(id, form) {
+  const { data } = await api.put(`/categories/${id}`, form);
+  return data.category;
+}
 
-    const response = await axios.get(`${API_BASE}/admin/orders?${params}`, {
-      headers: getAuthHeader(),
-    });
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch orders');
-  }
-};
-
-export const getOrderById = async (id) => {
-  try {
-    const response = await axios.get(`${API_BASE}/admin/orders/${id}`, {
-      headers: getAuthHeader(),
-    });
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch order');
-  }
-};
-
-export const updateOrderStatus = async (id, status, comment = '') => {
-  try {
-    const response = await axios.put(
-      `${API_BASE}/admin/orders/${id}/status`,
-      { status, comment },
-      {
-        headers: getAuthHeader(),
-      }
-    );
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to update order status');
-  }
-};
-
-// ============ CATEGORIES ============
-export const getCategories = async (page = 1, limit = 10) => {
-  try {
-    const response = await axios.get(
-      `${API_BASE}/admin/categories?page=${page}&limit=${limit}`,
-      {
-        headers: getAuthHeader(),
-      }
-    );
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch categories');
-  }
-};
-
-export const createCategory = async (name, description = '') => {
-  try {
-    const response = await axios.post(
-      `${API_BASE}/admin/categories`,
-      { name, description },
-      {
-        headers: getAuthHeader(),
-      }
-    );
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to create category');
-  }
-};
-
-export const updateCategory = async (id, name, description = '') => {
-  try {
-    const response = await axios.put(
-      `${API_BASE}/admin/categories/${id}`,
-      { name, description },
-      {
-        headers: getAuthHeader(),
-      }
-    );
-    return response.data.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to update category');
-  }
-};
-
-export const deleteCategory = async (id) => {
-  try {
-    await axios.delete(`${API_BASE}/admin/categories/${id}`, {
-      headers: getAuthHeader(),
-    });
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to delete category');
-  }
-};
-
-export default {
-  getDashboardStats,
-  getProducts,
-  createProduct,
-  getProductById,
-  updateProduct,
-  deleteProduct,
-  getOrders,
-  getOrderById,
-  updateOrderStatus,
-  getCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-};
+export async function adminDeleteCategory(id) {
+  await api.delete(`/categories/${id}`);
+}

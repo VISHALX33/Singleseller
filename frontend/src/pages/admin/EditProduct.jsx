@@ -1,86 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import AdminLayout from '../../components/admin/AdminLayout';
-import ProductForm from '../../components/admin/ProductForm';
-import * as adminService from '../../services/adminService';
+import { useEffect, useState } from 'react';
+import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import ProductForm from '../../components/admin/ProductForm.jsx';
+import { adminUpdateProduct } from '../../services/adminService.js';
+import { getProductById } from '../../services/productService.js';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-/**
- * Edit Product Page
- */
 export default function EditProduct() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchProduct();
-    fetchCategories();
-  }, [id]);
+  useEffect(()=>{
+    (async()=>{
+      setLoading(true);
+      try { const res = await getProductById(id); setProduct(res.product || res); } catch {} finally { setLoading(false); }
+    })();
+  },[id]);
 
-  const fetchProduct = async () => {
-    try {
-      const data = await adminService.getProductById(id);
-      setProduct(data);
-    } catch (error) {
-      toast.error('Failed to load product');
-      navigate('/admin/products');
-    } finally {
-      setLoading(false);
-    }
+  const submit = async (form) => {
+    setSaving(true);
+    try { const p = await adminUpdateProduct(id, form); setProduct(p); toast.success('Updated'); } catch {} finally { setSaving(false); }
   };
-
-  const fetchCategories = async () => {
-    try {
-      const data = await adminService.getCategories();
-      setCategories(data.categories || data);
-    } catch (error) {
-      toast.error('Failed to load categories');
-    }
-  };
-
-  const handleSubmit = async (formData) => {
-    try {
-      setSubmitting(true);
-      await adminService.updateProduct(id, formData);
-      toast.success('Product updated successfully');
-      navigate('/admin/products');
-    } catch (error) {
-      toast.error(error.message || 'Failed to update product');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <AdminLayout pageTitle="Edit Product" pageDescription="Update product details">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading product...</p>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
-    <AdminLayout pageTitle="Edit Product" pageDescription="Update product details">
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 max-w-4xl">
-        {product && (
-          <ProductForm
-            initialData={product}
-            categories={categories}
-            onSubmit={handleSubmit}
-            loading={submitting}
-            submitLabel="Update Product"
-          />
-        )}
-      </div>
+    <AdminLayout>
+      <h2 className='text-xl font-semibold text-primary mb-4'>Edit Product</h2>
+      {loading && <p className='text-slate'>Loading product...</p>}
+      {product && <ProductForm initial={product} onSubmit={submit} submitting={saving} />}
     </AdminLayout>
   );
 }

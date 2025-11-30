@@ -1,54 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
+import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import ProductForm from '../../components/admin/ProductForm.jsx';
+import { adminCreateProduct } from '../../services/adminService.js';
 import { useNavigate } from 'react-router-dom';
-import AdminLayout from '../../components/admin/AdminLayout';
-import ProductForm from '../../components/admin/ProductForm';
-import * as adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
 
-/**
- * Add Product Page
- */
 export default function AddProduct() {
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const data = await adminService.getCategories();
-      setCategories(data.categories || data);
-    } catch (error) {
-      toast.error('Failed to load categories');
-    }
-  };
-
-  const handleSubmit = async (formData) => {
-    try {
-      setLoading(true);
-      await adminService.createProduct(formData);
-      toast.success('Product created successfully');
-      navigate('/admin/products');
-    } catch (error) {
-      toast.error(error.message || 'Failed to create product');
-    } finally {
-      setLoading(false);
-    }
+  const submit = async (form) => {
+    setSaving(true);
+    try { const p = await adminCreateProduct(form); toast.success('Product created'); navigate(`/admin/products/edit/${p._id}`); } catch {} finally { setSaving(false); }
   };
 
   return (
-    <AdminLayout pageTitle="Add Product" pageDescription="Create a new product">
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 max-w-4xl">
-        <ProductForm
-          categories={categories}
-          onSubmit={handleSubmit}
-          loading={loading}
-          submitLabel="Create Product"
-        />
-      </div>
+    <AdminLayout>
+      <h2 className='text-xl font-semibold text-primary mb-4'>Add Product</h2>
+      <ProductForm onSubmit={submit} submitting={saving} />
     </AdminLayout>
   );
 }
