@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "Frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "Frontend/dist" } }
+  ],
+  "env": {
+    "VITE_API_BASE": "https://singleseller-backend.onrender.com/api"
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "https://singleseller-backend.onrender.com/api/$1" },
+    { "src": "/(.*)", "dest": "/Frontend/dist/index.html" }
+  ]
+}
