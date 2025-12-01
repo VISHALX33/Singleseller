@@ -12,7 +12,9 @@ export default function ProductImageGallery({ product }) {
       </div>
       <div className="flex gap-2 flex-wrap">
         {images.map(img => (
-          <button key={img} onClick={() => setActive(img)} className={`h-20 w-20 border rounded p-1 flex items-center justify-center bg-white ${active === img ? 'ring-2 ring-primary' : ''}`}>\n            <img src={img} alt="thumb" className="max-h-full object-contain" />\n          </button>
+          <button key={img} onClick={() => setActive(img)} className={`h-20 w-20 border rounded p-1 flex items-center justify-center bg-white ${active === img ? 'ring-2 ring-primary' : ''}`}>
+          <img src={img} alt="thumb" className="max-h-full object-contain" />          
+          </button>
         ))}
       </div>
     </div>
